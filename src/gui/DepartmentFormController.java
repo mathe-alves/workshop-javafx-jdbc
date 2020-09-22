@@ -1,9 +1,12 @@
 package gui;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import db.DbException;
+import gui.listeners.DataChangeListener;
 import gui.util.Alerts;
 import gui.util.Constraints;
 import gui.util.Utils;
@@ -23,6 +26,8 @@ public class DepartmentFormController implements Initializable{
 	private Department entity;
 	
 	private DepartmentService service;
+	
+	private List<DataChangeListener> dataChangeListeners = new ArrayList<>();
 	
 	//declaracao dos componentes da tela
 	
@@ -49,6 +54,10 @@ public class DepartmentFormController implements Initializable{
 		this.service = service;
 	}
 	
+	public void subscribeDataChangeListener(DataChangeListener listener) {
+		dataChangeListeners.add(listener);//vai adicionar na lista apos o save
+	}
+	
 	@FXML
 	public void onBtSaveAction(ActionEvent event) {
 		if (entity == null) {
@@ -60,6 +69,7 @@ public class DepartmentFormController implements Initializable{
 		try {
 		entity = getFormData(); //vai ser responsavel por pegar os dados na caixa do form e instanciar um dp 
 		service.saveOrUpdate(entity);//salvou no db
+		notifyDataChangeListeners();//vai notificar o db
 		Utils.currentStage(event).close();
 		}
 		catch (DbException e) {
@@ -67,6 +77,14 @@ public class DepartmentFormController implements Initializable{
 		}
 		}
 	
+	//vai executar a interface
+	private void notifyDataChangeListeners() {
+		for( DataChangeListener listener : dataChangeListeners) {
+			listener.onDataChanged();
+		}
+		
+	}
+
 	private Department getFormData() {
 		Department obj = new Department();
 		
@@ -78,7 +96,7 @@ public class DepartmentFormController implements Initializable{
 
 	@FXML
 	public void onBtCancelAction(ActionEvent event) {
-		Utils.currentStage(event).close();
+		Utils.currentStage(event).close();//aqui serve para fechar após o clique
 	}
 	
 	@Override
